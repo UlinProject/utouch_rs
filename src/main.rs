@@ -18,7 +18,6 @@ use rppal::gpio::Gpio;
 use rppal::i2c::I2c;
 use std::env::set_var;
 use std::env::var_os;
-use std::error::Error;
 use std::ffi::OsStr;
 use std::ffi::OsString;
 use std::fs::read_dir;
@@ -150,7 +149,7 @@ impl InputDevice {
 		id: i8,
 		mut x: u16,
 		mut y: u16,
-	) -> Result<(), Box<dyn Error>> {
+	) -> anyhow::Result<()> {
 		match self {
 			Self::X11OrWayland {
 				context,
@@ -258,7 +257,7 @@ impl InputDevice {
 		}
 	}
 
-	pub fn free_time(&mut self) -> Result<(), Box<dyn Error>> {
+	pub fn free_time(&mut self) -> anyhow::Result<()> {
 		match self {
 			Self::X11OrWayland {
 				context,
@@ -310,7 +309,7 @@ impl InputDevice {
 		}
 	}
 
-	pub fn init_press(&mut self) -> Result<(), Box<dyn Error>> {
+	pub fn init_press(&mut self) -> anyhow::Result<()> {
 		match self {
 			Self::X11OrWayland { .. /*context, transform, cx, cy, is_add_click*/ } => {
 				Ok(())
@@ -322,7 +321,7 @@ impl InputDevice {
 	}
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> anyhow::Result<()> {
 	env_logger::try_init()?;
 	info!("utouch_rs: ");
 
