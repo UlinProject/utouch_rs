@@ -2,6 +2,12 @@
 name = "utouch_rs"
 version = "0.1.0"
 edition = "2024"
+authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
+description = "User-space driver for touch sensors connected via I2C/other buses, emulating uinput, X11, or Wayland mouse."
+repository = "https://github.com/UlinProject/utouch_rs.git"
+license = "MIT"
+readme = "README.md"
+keywords = ["touchscreen", "userspacedriver", "i2c", "uinput", "x11", "wayland"]
 
 [dependencies]
 anyhow = "1.0.98"
