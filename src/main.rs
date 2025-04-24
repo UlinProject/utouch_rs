@@ -56,12 +56,12 @@ pub enum CTypeTransformCoordinates {
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum CIdentDevice {
-	X11Mouse(CTypeTransformCoordinates),
+	X11OrWayland(CTypeTransformCoordinates),
 	UInput,
 }
 
 pub enum InputDevice {
-	X11Mouse {
+	X11OrWayland {
 		context: Context,
 		transform: CTypeTransformCoordinates,
 
@@ -79,12 +79,12 @@ pub enum InputDevice {
 }
 
 impl InputDevice {
-	pub fn new(c_ident_device: CIdentDevice) -> Result<Self, Box<dyn Error>> {
+	pub fn new(c_ident_device: CIdentDevice) -> anyhow::Result<Self> {
 		match c_ident_device {
-			CIdentDevice::X11Mouse(transform) => {
+			CIdentDevice::X11OrWayland(transform) => {
 				let context = Context::new()?;
 
-				Ok(Self::X11Mouse {
+				Ok(Self::X11OrWayland {
 					context,
 					transform,
 
@@ -124,7 +124,7 @@ impl InputDevice {
 
 	pub fn initialize_event_aggregator(&mut self) {
 		/*match self {
-			Self::X11Mouse { context, transform, cx, cy, is_add_click } => {},
+			Self::X11OrWayland { context, transform, cx, cy, is_add_click } => {},
 			Self::UInput { device, fingers, a_slot } => {
 
 			},
@@ -133,10 +133,14 @@ impl InputDevice {
 
 	pub fn drop_event(&mut self) {
 		match self {
-			Self::X11Mouse { .. /*context, transform, cx, cy, is_add_click*/ } => {},
-			Self::UInput { device: _, fingers: _, a_slot } => {
+			Self::X11OrWayland { .. } => {}
+			Self::UInput {
+				device: _,
+				fingers: _,
+				a_slot,
+			} => {
 				*a_slot += 1;
-			},
+			}
 		}
 	}
 
@@ -148,7 +152,7 @@ impl InputDevice {
 		mut y: u16,
 	) -> Result<(), Box<dyn Error>> {
 		match self {
-			Self::X11Mouse {
+			Self::X11OrWayland {
 				context,
 				transform,
 				cx,
@@ -256,7 +260,7 @@ impl InputDevice {
 
 	pub fn free_time(&mut self) -> Result<(), Box<dyn Error>> {
 		match self {
-			Self::X11Mouse {
+			Self::X11OrWayland {
 				context,
 				transform: _,
 				cx: _,
@@ -269,7 +273,7 @@ impl InputDevice {
 				context.mouse_click(MouseButton::Left)?;
 				Ok(())
 			}
-			Self::X11Mouse { .. } => Ok(()),
+			Self::X11OrWayland { .. } => Ok(()),
 			Self::UInput {
 				device,
 				fingers,
@@ -308,7 +312,7 @@ impl InputDevice {
 
 	pub fn init_press(&mut self) -> Result<(), Box<dyn Error>> {
 		match self {
-			Self::X11Mouse { .. /*context, transform, cx, cy, is_add_click*/ } => {
+			Self::X11OrWayland { .. /*context, transform, cx, cy, is_add_click*/ } => {
 				Ok(())
 			},
 			Self::UInput { .. /*device, fingers, a_slot*/ } => {
@@ -327,7 +331,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 		owned_a = a;
 		owned_a.as_os_str()
 	}) {
-		Some(a) if a == osstr!("X11_MOUSE") || a == osstr!("X11") || a == osstr!("MOUSE") => {
+		Some(a)
+			if a == osstr!("X11_MOUSE")
+				|| a == osstr!("X11")
+				|| a == osstr!("MOUSE")
+				|| a == osstr!("WAYLAND_MOUSE")
+				|| a == osstr!("WAYLAND")
+				|| a == osstr!("UINPUT") =>
+		{
 			let c_type_transform_coordinates = match var_os("CTYPE") {
 				Some(a) if a == osstr!("01") || a == osstr!("1") => {
 					CTypeTransformCoordinates::Ver01
@@ -395,7 +406,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 				}
 			};
 
-			CIdentDevice::X11Mouse(c_type_transform_coordinates)
+			CIdentDevice::X11OrWayland(c_type_transform_coordinates)
 		}
 		Some(a) if a == osstr!("UINPUT") || a == osstr!("LINUX") || a == osstr!("TOUCH") => {
 			CIdentDevice::UInput
